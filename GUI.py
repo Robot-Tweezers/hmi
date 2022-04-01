@@ -1,66 +1,51 @@
-from multiprocessing import Process, Lock
-import multithreading
+# import multithreading
 import PySimpleGUI as sg
 from time import sleep
+import threading
 
-class SharedData:
-    def __init__(self):
-        self.lock = Lock()
-        self.gain = 0
+from serial import SerialException
+from serialparser import Serialparser
+from HMI_server import HMIServer
 
-class GUIchild:
-    def __init__(self, sharedata):
+class GUI:
+    def __init__(self, server):
         self.layout = [
-                    [sg.Text('Some text on Row 1')],
-                    [sg.Text('Enter something on Row 2'), sg.InputText()],
-                    [sg.Button('Ok'), sg.Button('Cancel')]]
+            [sg.Text("Robot Tweezers HMI GUI")],
+            # [sg.Text("Connected to: " + port.name), sg.Button("Reconnect")],
+            [sg.Text("Actuator Settings"), sg.InputText(key="actuator_settings")],
+            [sg.Text("Roll Angle"), sg.InputText(key="roll", default_text=3.1415, size=(15, 30))],
+            [sg.Text("Pitch Angle"), sg.InputText(key="pitch", default_text=0, size=(15, 30))],
+            [sg.Text("Yaw Angle"), sg.InputText(key="yaw", default_text=0, size=(15, 30))],
+            [sg.Button("Go")]
+        ]
 
         self.window = sg.Window('Control Panel', self.layout)
 
-        self.sd = sharedata
+        self.server = server
 
-    def update(self):
-        print("Starting child")
+    def start(self):
         while True:
-            print("Doing")
+            print("GUI window")
             event, values = self.window.read()
             if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
                 raise RuntimeError("Window Closed")
             print('You entered ', values[0])
 
-            self.sd.lock.acquire()
-            try:
-                self.sd.gain = values[0]
-            finally:
-                self.sd.lock.release()
-
-            sleep(1)
-
-class GUI:
-    def __init__(self):
-            self.sd = SharedData()
-            self.child = GUIchild(self.sd)
-
-            # self.child.update()
-            self.p = Process(target=self.child.update)
-            self.p.start()
-
-    def getDat(self):
-        g = 0
-        self.sd.lock.acquire()
-        try:
-            g = self.sd.gain
-        finally:
-            self.sd.lock.release()
-
-        return g
+            self.server.gain = values[0]
 
 if __name__ == "__main__":
-    g = GUI()
 
-    for i in range(10):
-        d = g.getDat()
-        print(f"Data {i:2} is: {d}")
-        sleep(1)
+    try:
+        s = Serialparser("/dev/cu.usbmodem14101", 9600)
+    except SerialException:
+        s = None
+        print("Serial not connected! Using full GUI mode")
+    h = HMIServer(0, 0, 0, s)
 
-    g.p.join()
+    g = GUI(h)
+
+    server = threading.Thread(target=h.start, daemon=True)
+
+
+    server.start()
+    g.start()
