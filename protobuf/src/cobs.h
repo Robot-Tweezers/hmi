@@ -14,7 +14,7 @@ class COBEncoder {
 		int next0;
 
 	public:
-		COBEncoder(HardwareSerial serial, int bs);
+		COBEncoder(HardwareSerial serial);
 		void write(char *byte, int len);
 		void reset();
 		bool decode(char byte);

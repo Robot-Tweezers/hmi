@@ -1,10 +1,18 @@
 
 #include "cobs.h"
 
-COBEncoder::COBEncoder(HardwareSerial serial, int bs) {
+COBEncoder::COBEncoder(HardwareSerial serial) {
 	s = serial;
-	buffsize = bs;
 	bufpos = 0;
+}
+
+void write(char *byte, int len) {
+	if (len > 254) {
+		// Print some error here
+		return;
+	}
+
+	// for ()
 }
 
 bool COBEncoder::decode(char byte) {
