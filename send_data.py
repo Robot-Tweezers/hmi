@@ -10,10 +10,10 @@ class Teensy:
         self.port = port
         self.host = host
 
-
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.s.connect((self.host, self.port))
+            self.s.settimeout(1) # seconds
         except socket.error:
             pass
 

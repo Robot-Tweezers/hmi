@@ -27,11 +27,12 @@ class GUI:
         while True:
             print("GUI window")
             event, values = self.window.read()
-            if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-                raise RuntimeError("Window Closed")
-            print('You entered ', values[0])
-
-            self.server.gain = values[0]
+            if event in (sg.WIN_CLOSED, 'Cancel'):
+                break
+            if event == "Go":
+                self.server.roll = float(values["roll"])
+                self.server.pitch = float(values["pitch"])
+                self.server.yaw = float(values["yaw"])
 
 if __name__ == "__main__":
 
@@ -40,7 +41,9 @@ if __name__ == "__main__":
     except SerialException:
         s = None
         print("Serial not connected! Using full GUI mode")
-    h = HMIServer(0, 0, 0, s)
+    h = HMIServer("172.20.10.3", 80, 0, s)
+
+    print("HMI server setup")
 
     g = GUI(h)
 
