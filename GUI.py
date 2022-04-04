@@ -6,6 +6,7 @@ import threading
 from serial import SerialException
 from serialparser import Serialparser
 from HMI_server import HMIServer
+from vive import Vive
 
 class GUI:
     def __init__(self, server):
@@ -41,14 +42,16 @@ if __name__ == "__main__":
     except SerialException:
         s = None
         print("Serial not connected! Using full GUI mode")
-    h = HMIServer("172.20.10.3", 80, 0, s)
+
+    vive = Vive()
+
+    h = HMIServer("192.168.1.212", 80, vive, s)
 
     print("HMI server setup")
 
     g = GUI(h)
 
     server = threading.Thread(target=h.start, daemon=True)
-
 
     server.start()
     g.start()
