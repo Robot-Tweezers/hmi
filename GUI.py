@@ -33,7 +33,7 @@ class GUI:
 
         self.server = server
 
-        self.plot = Liveplot("Vive Roll", 200, ndim=3)
+        self.plot = Liveplot("Vive Rotation Data", 200, ["Roll", "Pitch", "Yaw"], ndim=3)
         self.plot.plot.setYRange(-180, 180)
 
     def start(self):
