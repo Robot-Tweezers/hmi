@@ -1,7 +1,11 @@
 # import multithreading
+from re import S
 import PySimpleGUI as sg
 from time import sleep
 import threading
+
+import pyqtgraph as pg
+import numpy as np
 
 from serial import SerialException
 from serialparser import Serialparser
@@ -28,6 +32,16 @@ class GUI:
 
         self.server = server
 
+        self.x = np.linspace(0, 200, 200)
+        self.plotlen = 200
+        self.rollplotdat = np.zeros(self.plotlen)
+
+        self.plot = pg.plot(title="Vive Roll")
+        self.curve = self.plot.plot(self.x, self.rollplotdat)
+        self.plot.setYRange(-180,180)
+
+        self.i = 0
+
     def start(self):
         while True:
             event, values = self.window.read(timeout=10)
@@ -46,7 +60,15 @@ class GUI:
             self.window['pitchout'].update(f'{self.server.pitch:4.2f}')
             self.window['yawout'].update(f'{self.server.yaw:4.2f}')
 
+            self.rollplotdat[self.i] = self.server.vive.roll
+            self.i = (self.i + 1) % 200
 
+            y1 = self.rollplotdat[:self.i]
+            y2 = self.rollplotdat[self.i:]
+
+            cat = np.append(y2, y1)
+
+            self.curve.setData(self.x, cat)
 
 if __name__ == "__main__":
 
