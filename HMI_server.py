@@ -1,3 +1,4 @@
+from distutils.log import debug
 from tkinter import Y
 from typing import Type
 from xmlrpc.client import ProtocolError
@@ -13,16 +14,16 @@ import vive
 import math
 
 class HMIServer:
-	def __init__(self, host, port, vive, serialparser):
+	def __init__(self, host, port, vive, serialparser, debug=False):
 		self.port = port
 		self.host = host
 
-		# try:
-		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.s.settimeout(1) # seconds
-		self.s.connect((self.host, self.port))
-		# except socket.error:
-		# 	print("!!!! Socket error! Not connected to client !!!!")
+		try:
+			self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.s.settimeout(1) # seconds
+			self.s.connect((self.host, self.port))
+		except socket.error:
+			print("!!!! Socket error! Not connected to client !!!!")
 
 		self.vive = vive
 		self.serialparser = serialparser
@@ -32,10 +33,11 @@ class HMIServer:
 
 		self.gain = 0
 
-
 		self.roll = 0
 		self.pitch = 0
 		self.yaw = 0
+
+		self.debug = debug
 
 	def update_data(self):
 		# Get data from arduino over serial (potentiometer and limit switch)
@@ -45,11 +47,10 @@ class HMIServer:
 
 		# Data from the GUI is pushed from the gui thread.
 
-		# Get data from the vive
-		# self.vive.update()
-		# self.roll = self.vive.roll * math.pi/180 * 0
-		# self.pitch = self.vive.pitch * math.pi/180 * 0
-		# self.yaw = self.vive.yaw * math.pi/180
+		# Vive data will always be updating in its thread
+		self.roll = self.vive.roll * math.pi/180
+		self.pitch = self.vive.pitch * math.pi/180
+		self.yaw = self.vive.yaw * math.pi/180
 
 
 	def send_data(self):
@@ -58,10 +59,15 @@ class HMIServer:
 		d.pitch = self.pitch
 		d.yaw = self.yaw
 
-		print("Sending Data: ", d)
+		if self.debug:
+			print("Sending Data: ", d)
 
 		dbytes = d.SerializeToString()
-		self.s.sendall(dbytes)
+
+		try:
+			self.s.sendall(dbytes)
+		except socket.timeout:
+			pass
 
 		# try:
 		# 	print(self.s.recv(1024))
@@ -72,7 +78,7 @@ class HMIServer:
 		while True:
 			self.update_data()
 			self.send_data()
-			sleep(0.1)
+			sleep(0.5)
 
 if __name__ == "__main__":
 	sp = Serialparser("COM8", 9600)
