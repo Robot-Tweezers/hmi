@@ -33,14 +33,8 @@ class GUI:
 
         self.server = server
 
-        self.rollplot = Liveplot("Vive Roll", 200)
-        self.rollplot.plot.setYRange(-180, 180)
-
-        self.pitchplot = Liveplot("Vive Pitch", 200)
-        self.pitchplot.plot.setYRange(-180, 180)
-
-        self.yawplot = Liveplot("Vive Yaw", 200)
-        self.yawplot.plot.setYRange(-180, 180)
+        self.plot = Liveplot("Vive Roll", 200, ndim=3)
+        self.plot.plot.setYRange(-180, 180)
 
     def start(self):
         while True:
@@ -64,9 +58,7 @@ class GUI:
             self.window['pitchout'].update(f'{self.server.pitch:4.2f}')
             self.window['yawout'].update(f'{self.server.yaw:4.2f}')
 
-            self.rollplot.update(roll)
-            self.pitchplot.update(pitch)
-            self.yawplot.update(yaw)
+            self.plot.update([roll, pitch, yaw])
 
 if __name__ == "__main__":
 
@@ -78,7 +70,7 @@ if __name__ == "__main__":
 
     vive = Vive()
 
-    h = HMIServer("192.168.1.212", 80, vive, s)
+    h = HMIServer("192.168.1.212", 80, vive, s, debug=True)
 
     print("HMI server setup")
 
