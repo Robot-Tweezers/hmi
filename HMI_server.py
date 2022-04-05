@@ -13,6 +13,8 @@ import vive
 
 import math
 
+from liveplot import Liveplot
+
 class HMIServer:
 	def __init__(self, host, port, vive, serialparser, debug=False):
 		self.port = port
@@ -45,12 +47,10 @@ class HMIServer:
 			(self.pot_position, self.en_switch) = self.serialparser.getmsg()
 			# print(self.pot_position)
 
-		# Data from the GUI is pushed from the gui thread.
-
 		# Vive data will always be updating in its thread
-		self.roll = self.vive.roll * math.pi/180
-		self.pitch = self.vive.pitch * math.pi/180
-		self.yaw = self.vive.yaw * math.pi/180
+		self.roll = self.vive.roll() * math.pi/180
+		self.pitch = self.vive.pitch() * math.pi/180
+		self.yaw = self.vive.yaw() * math.pi/180
 
 
 	def send_data(self):
@@ -78,7 +78,7 @@ class HMIServer:
 		while True:
 			self.update_data()
 			self.send_data()
-			sleep(0.5)
+			sleep(0.01)
 
 if __name__ == "__main__":
 	sp = Serialparser("COM8", 9600)

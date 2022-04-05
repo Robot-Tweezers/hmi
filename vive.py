@@ -3,37 +3,54 @@ import sys
 from typing import Type
 import threading
 
+import numpy as np
+
 sys.path.append('triad_openvr/')
 import triad_openvr
 
 class Vive:
-    def __init__(self, interval=1/250, debug=False):
+    def __init__(self, interval=1/250, N=2, debug=False):
         self.v = triad_openvr.triad_openvr()
         self.v.print_discovered_objects()
 
-        self.roll = 0
-        self.pitch = 0
-        self.yaw = 0
-
         self.interval = interval
         self.debug = debug
+
+        self.N = N
+
+        self._roll =  np.zeros(self.N)
+        self._pitch = np.zeros(self.N)
+        self._yaw =   np.zeros(self.N)
+
+        self.i = 0
+
+    def roll(self):
+        return np.average(self._roll)
+
+    def pitch(self):
+        return np.average(self._pitch)
+
+    def yaw(self):
+        return np.average(self._yaw)
 
     def update(self):
         dat = self.v.devices["tracker_1"].get_pose_euler()
 
         try:
-            self.yaw   = dat[3]
-            self.pitch = dat[4]
-            self.roll  = dat[5]
+            self._yaw[self.i]   = dat[3]
+            self._pitch[self.i] = dat[4]
+            self._roll[self.i]  = dat[5]
         except TypeError:
             pass
+
+        self.i = (self.i + 1) % self.N
 
         if self.debug:
             self.printstate()
 
     def printstate(self):
         txt = ""
-        for each in [self.roll, self.pitch, self.yaw]:
+        for each in [self.roll(), self.pitch(), self.yaw()]:
             txt += "%5.1f" % each
             txt += " "
         print("\r" + txt, end="")
@@ -51,7 +68,7 @@ class Vive:
         self.t.start()
 
 if __name__ == "__main__":
-    vive = Vive(debug=True)
+    vive = Vive(debug=True, N=1, interval=0)
     vive.start()
     while True:
         continue
