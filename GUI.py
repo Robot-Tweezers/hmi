@@ -8,6 +8,7 @@ import pyqtgraph as pg
 import numpy as np
 
 from serial import SerialException
+from liveplot import Liveplot
 from serialparser import Serialparser
 from HMI_server import HMIServer
 from vive import Vive
@@ -32,15 +33,14 @@ class GUI:
 
         self.server = server
 
-        self.x = np.linspace(0, 200, 200)
-        self.plotlen = 200
-        self.rollplotdat = np.zeros(self.plotlen)
+        self.rollplot = Liveplot("Vive Roll", 200)
+        self.rollplot.plot.setYRange(-180, 180)
 
-        self.plot = pg.plot(title="Vive Roll")
-        self.curve = self.plot.plot(self.x, self.rollplotdat)
-        self.plot.setYRange(-180,180)
+        self.pitchplot = Liveplot("Vive Pitch", 200)
+        self.pitchplot.plot.setYRange(-180, 180)
 
-        self.i = 0
+        self.yawplot = Liveplot("Vive Yaw", 200)
+        self.yawplot.plot.setYRange(-180, 180)
 
     def start(self):
         while True:
@@ -52,23 +52,21 @@ class GUI:
             if event == "gainslider":
                 self.server.gain = 1/float(values["gainslider"])
 
-            self.window['rolltxt'].update(f'{self.server.vive.roll:4.0f}')
-            self.window['pitchtxt'].update(f'{self.server.vive.pitch:4.0f}')
-            self.window['yawtxt'].update(f'{self.server.vive.yaw:4.0f}')
+            roll = self.server.vive.roll()
+            pitch = self.server.vive.pitch()
+            yaw = self.server.vive.yaw()
+
+            self.window['rolltxt'].update(f'{roll:4.0f}')
+            self.window['pitchtxt'].update(f'{pitch:4.0f}')
+            self.window['yawtxt'].update(f'{yaw:4.0f}')
 
             self.window['rollout'].update(f'{self.server.roll:4.2f}')
             self.window['pitchout'].update(f'{self.server.pitch:4.2f}')
             self.window['yawout'].update(f'{self.server.yaw:4.2f}')
 
-            self.rollplotdat[self.i] = self.server.vive.roll
-            self.i = (self.i + 1) % 200
-
-            y1 = self.rollplotdat[:self.i]
-            y2 = self.rollplotdat[self.i:]
-
-            cat = np.append(y2, y1)
-
-            self.curve.setData(self.x, cat)
+            self.rollplot.update(roll)
+            self.pitchplot.update(pitch)
+            self.yawplot.update(yaw)
 
 if __name__ == "__main__":
 
